@@ -34,7 +34,10 @@ alpha：默认为0.6，为权重系数可调整。
 
 混淆矩阵如下：
 
-![image-20260116163115668](C:\Users\chenrui5-jk\AppData\Roaming\Typora\typora-user-images\image-20260116163115668.png)
+<img width="1200" height="1000" alt="image" src="https://github.com/user-attachments/assets/7fe20da2-2dbc-4d2f-9d8d-a2d4948476c7" />
+
+
+
 
 metrics_per_class详情如下：
 
@@ -80,7 +83,8 @@ metrics_per_class详情如下：
 
 混淆矩阵如下：
 
-![image-20260116163624939](C:\Users\chenrui5-jk\AppData\Roaming\Typora\typora-user-images\image-20260116163624939.png)
+<img width="1200" height="1000" alt="image" src="https://github.com/user-attachments/assets/60954ede-ce3c-4fa4-aa01-9ebd232dbef3" />
+
 
 metrics_per_class详情如下：
 
@@ -125,9 +129,9 @@ metrics_per_class详情如下：
 
 ### 2. 数学公式
 
-- Micro Precision (微平均精确率) $$ Precision_{micro} = \frac{TP_{total}}{TP_{total} + FP_{total}} $$ 含义：在所有被预测出的标签中，有多少是对的。
-- Micro Recall (微平均召回率) $$ Recall_{micro} = \frac{TP_{total}}{TP_{total} + FN_{total}} $$ 含义：在所有真实的标签样本中，有多少被正确预测了。
-- Micro F1-Score (微平均 F1 分数) $$ F1_{micro} = 2 \times \frac{Precision_{micro} \times Recall_{micro}}{Precision_{micro} + Recall_{micro}} $$ 含义：精确率和召回率的调和平均数。
+- Micro Precision (微平均精确率) $ Precision_{micro} = \frac{TP_{total}}{TP_{total} + FP_{total}} $ 含义：在所有被预测出的标签中，有多少是对的。
+- Micro Recall (微平均召回率) $ Recall_{micro} = \frac{TP_{total}}{TP_{total} + FN_{total}} $ 含义：在所有真实的标签样本中，有多少被正确预测了。
+- Micro F1-Score (微平均 F1 分数) $ F1_{micro} = 2 \times \frac{Precision_{micro} \times Recall_{micro}}{Precision_{micro} + Recall_{micro}} $ 含义：精确率和召回率的调和平均数。
 
 本项目作为 单标签多分类 (Single-label Multi-class Classification) 问题（即每个样本只有一个真实标签，也只预测一个标签）：
 
@@ -137,9 +141,6 @@ metrics_per_class详情如下：
 ## 出现的问题：
 
 ### 1.with ocr模型的bad cases分析：
-
-<img src="C:\Users\chenrui5-jk\Desktop\RAG分类\RAG\wld_user_info\个人信息.jpg" alt="个人信息" style="zoom: 25%;" /><img src="C:\Users\chenrui5-jk\Desktop\RAG分类\RAG\dxm_user_info\个人信息.jpg" alt="个人信息" style="zoom: 25%;" />
-
 #### 分析：
 
 首先对于clip系列的视觉模型来说，视觉内容极度相似 ： wld_user_info 、 jdjr_user_info 、 mtshf_user_info 等的“个人信息”页面在视觉布局上极其相似（都是白色背景、列表式布局）。
@@ -152,11 +153,8 @@ metrics_per_class详情如下：
 
 第一，使用图片相似度阈值法直接过滤。，我们目的是想要找到一个明显的threshold在已知的类的版式与所有未知的图像版式之间，按照常理来分析，如果是未知的other类的待预测图片送入图片相似度检测与已知类别的图片送入相似度检测，显然总体的相似度平均值会更低一些，如果能有这样的一个threshold存在，那么我们把这些低于这个threshold的待分类图片可以全部分入other类别即可，但是可惜的是，经过对目前的数据集，已知的类别与other类别进行相似度分析之后，并没有看到明显的这样的一个threshold，经过初步分析，原因是不论是否是已知的类别还是other类别的版式界面，除了其中的文字内容，版式布局可能存在不同之外，绝大多数的背景区域是非常相似的，而使用的clip系列模型并没有如此强的细粒度感知的能力，这源于CLIP在预训练中侧重于粗粒度语义匹配，缺乏对局部判别性特征的关注，也就导致了CLIP的对比学习范式使其更关注**全局语义对齐**，而**忽视局部细节特征**，由此影响，我们发现，相似度最低的待预测图像与数据库中存入的图像向量的相似度也超过了0.8，这使得我们如果使用clip系列作为图像编码器编码图像特征向量的话，几乎不可能找到这样的一个threshold。
 
-<img src="C:\Users\chenrui5-jk\AppData\Roaming\Typora\typora-user-images\image-20260119143230290.png" alt="image-20260119143230290" style="zoom:50%;" />
 
 第二，我们还发现，目前测试集属于other类别的某些版式与已知类别的版式非常的接近，严重怀疑这些竞品的版式是模仿一些主流公司的版式进行设计的，仅仅是布局，色调的些许差距，以及关键文本的不同，如以下两张other类别的版式与dyfxj_amount此类非常相似，并且这两张other版式内部仅仅是“天津金城银行”和“亿联银行”的文字差异，其余完全一致，这对于我们不论是使用视觉特征向量，亦或者是使用ocr相似度检测来说，都是极难的样例，目前没有特别好的全自动化的分类方法。
-
-<img src="C:\Users\chenrui5-jk\AppData\Roaming\Typora\typora-user-images\image-20260119145218101.png" alt="image-20260119145218101" style="zoom:20%;" /><img src="C:\Users\chenrui5-jk\AppData\Roaming\Typora\typora-user-images\image-20260119145228763.png" alt="image-20260119145228763" style="zoom:20%;" /><img src="C:\Users\chenrui5-jk\AppData\Roaming\Typora\typora-user-images\image-20260119150004324.png" alt="image-20260119150004324" style="zoom:25%;" />
 
 
 
@@ -165,3 +163,4 @@ metrics_per_class详情如下：
 基于上述clip系列模型的不足，我们尝试更换模型去提取图片特征向量，按照需求，具有细粒度感知能力的模型肯定会提升我们分类的精准度，并且也可能解决我们other类别无法判断的问题，我们由此思路入手，展开进一步的研究与测试。
 
 #### 通义千问3-VL-Embedding-8B
+
